@@ -72,15 +72,13 @@ class Videos:
             # self.queues[index].set_property('max-size-bytes', 0)
             # self.queues[index].set_property('max-size-time', 0)
             # self.queues[index].set_property('min-threshold-buffers', 0)
-            # self.queues[index].set_property('min-threshold-bytes', 200485760)
+            # self.queues[index].set_property('min-threshold-bytes', 20048576)
             # self.queues[index].set_property('min-threshold-time', 10000000000)
 
             self.vconverts[index].link(self.queues[index])
             queue_pad = self.queues[index].get_static_pad("src")
             multiqueue_pad = self.multiqueue.request_pad(self.multiqueue.get_pad_template("sink_%u"), None, None)
             queue_pad.link(multiqueue_pad)
-
-
 
     def play(self):
         # self.pipeline.set_state(Gst.State.PLAYING)
@@ -192,9 +190,7 @@ class GUI:
         videos.stop()
 
 
-links = ["http://192.168.0.100:8080/video", "http://192.168.0.100:8080/video", "http://192.168.0.100:8080/video",
-         "http://192.168.0.100:8080/video", "http://192.168.0.100:8080/video", "http://192.168.0.100:8080/video",
-         "http://192.168.0.100:8080/video", "http://192.168.0.100:8080/video", "http://192.168.0.100:8080/video"]
+links = ["http://192.168.0.100:8080/video", "http://192.168.0.102:8080/video"]
 # links = ["https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
 #          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
 #          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"]
