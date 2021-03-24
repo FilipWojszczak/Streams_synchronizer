@@ -190,7 +190,7 @@ class GUI:
         videos.stop()
 
 
-links = ["http://192.168.0.100:8080/video", "http://192.168.0.102:8080/video"]
+links = ["http://192.168.0.102:8080/video", "http://192.168.0.104:8080/video"]
 # links = ["https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
 #          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
 #          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"]
