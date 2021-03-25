@@ -21,10 +21,11 @@ class Scheduler:
             self.playing_state = True
             try:
                 frame_to_display = self.videos[index].get_frame()
-                # if index == 1:
+                # if index == 0:
                 #     print(len(self.videos[index].frames_list))
                 frame_to_display = cv2.cvtColor(frame_to_display, cv2.COLOR_BGR2RGB) # OpenCV treat images as having BGR layers, Pillow as RGB
                 img = Image.fromarray(frame_to_display)
+                # img = self.adjust_frame_size(img, img.size)
                 img = img.resize((320, 240))
                 imgtk = ImageTk.PhotoImage(image=img)
                 self.gui.add_frame(index, imgtk)
@@ -50,6 +51,18 @@ class Scheduler:
 
     def display_GUI(self):
         self.gui.window.mainloop()
+
+    def adjust_frame_size(self, image, old_size):
+        # try:
+        ratio = old_size[0] // old_size[1]
+        if self.gui.default_size[0] > self.gui.default_size[1]\
+                or (self.gui.default_size[0] == self.gui.default_size[1] and old_size[0] < old_size[1]):
+            return image.resize((self.gui.default_size[1] * ratio, self.gui.default_size[1]))
+        elif self.gui.default_size[0] < self.gui.default_size[1]\
+                or (self.gui.default_size[0] == self.gui.default_size[1] and old_size[0] > old_size[1]):
+            return image.resize((self.gui.default_size[0], self.gui.default_size[0] // ratio))
+        # except:
+        #     return image.resize((320, 240))
 
 
 class Video(cv2.VideoCapture):
@@ -90,17 +103,70 @@ class Video(cv2.VideoCapture):
 
 class GUI:
     def __init__(self, cameras_number):
+        self.default_size = (320, 240)
         self.window = tk.Tk()
         self.window.wm_title("Synchronizer")
 
-        self.videos_frame = tk.Frame(self.window, width=600, height=500)
-        self.videos_frame.grid(row=0, column=0)
-
+        self.videos_frames = []
         self.videos_area = []
-        for row in range(((cameras_number - 1) // 3) + 1):
-            for column in range(3):
-                self.videos_area.append(tk.Label(self.videos_frame))
-                self.videos_area[-1].grid(row=row, column=column, padx=2, pady=2)
+        for cam_nr in range(cameras_number):
+            if cam_nr % 3 == 0:
+                self.videos_frames.append(tk.Frame(self.window))
+                self.videos_frames[-1].pack(expand=tk.YES, fill=tk.BOTH)
+            self.videos_area.append(tk.Label(self.videos_frames[-1]))
+            self.videos_area[-1].pack(expand=tk.YES, side=tk.LEFT, fill=tk.BOTH)
+
+        self.blank_videos_places = 0
+        if cameras_number > 3 and cameras_number % 3 != 0:
+            self.blank_videos_places = 3 - (cameras_number % 3)
+            for i in range(self.blank_videos_places):
+                self.videos_area.append(tk.Label(self.videos_frames[-1]))
+                self.videos_area[-1].pack(expand=tk.YES, side=tk.LEFT, fill=tk.BOTH)
+
+        image = Image.new("RGB", self.default_size, (0, 0, 0))
+        image = ImageTk.PhotoImage(image=image)
+        for i, area in enumerate(self.videos_area):
+            self.add_frame(i, image)
+
+        # self.videos_frame = tk.Frame(self.window)
+        # self.videos_frame.pack(expand=tk.YES)
+        # # self.videos_frame.grid(row=0, column=0)
+        #
+        # self.videos_area = []
+        # for row in range(((cameras_number - 1) // 3) + 1):
+        #     for column in range(3):
+        #         self.videos_area.append(tk.Label(self.videos_frame))
+        #         self.videos_area[-1].grid(row=row, column=column, padx=2, pady=2)
+
+        self.buttons_frame = tk.Frame(self.window, pady=5)
+        self.buttons_frame.pack(fill=tk.BOTH)
+        self.play_button = tk.Button(self.buttons_frame, text="Play", command=self.on_play)
+        self.pause_button = tk.Button(self.buttons_frame, text="Pause", command=self.on_pause)
+        self.stop_button = tk.Button(self.buttons_frame, text="Stop", command=self.on_stop)
+        self.play_button.pack(expand=tk.YES, side=tk.LEFT)
+        self.pause_button.pack(expand=tk.YES, side=tk.LEFT)
+        self.stop_button.pack(expand=tk.YES, side=tk.LEFT)
+
+        self.window.bind('<Configure>', self.on_resize)
+
+    def on_resize(self, event):
+        self.default_size = (self.videos_area[0].winfo_width(), self.videos_area[0].winfo_height())
+
+        # image = Image.new("RGB", (self.default_size[0] - 2, self.default_size[1] - 2), (0, 0, 0))
+        # image = ImageTk.PhotoImage(image=image)
+        # for i, area in enumerate(self.videos_area):
+        #     self.add_frame(i, image)
+
+    def on_play(self):
+        print(self.videos_area[0].winfo_width(), self.videos_area[0].winfo_height())
+        print(self.videos_area[3].winfo_width(), self.videos_area[3].winfo_height())
+        # print(self.buttons_frame.winfo_width(), self.buttons_frame.winfo_height())
+
+    def on_pause(self):
+        pass
+
+    def on_stop(self):
+        pass
 
     def add_frame(self, index, imgtk):
         self.videos_area[index].imgtk = imgtk
@@ -109,10 +175,12 @@ class GUI:
 
 # cap = Video("http://192.168.0.100:8080/video", 10)
 cameras = [
-           # "http://192.168.0.100:8080/video",
+           "http://192.168.0.101:8080/video",
+           # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
+           # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
            "http://192.168.0.102:8080/video",
            "http://192.168.0.104:8080/video",
-           # 0
+           0
            ]
 scheduler = Scheduler(cameras, 100, 50)
 scheduler.play_all()

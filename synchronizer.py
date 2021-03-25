@@ -8,6 +8,7 @@ gi.require_version("Gst", "1.0")
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gst, GLib, GObject, Gtk
+
 Gst.init(None)
 Gst.init_check(None)
 
@@ -168,11 +169,13 @@ class GUI:
             if i == 0:
                 self.main_grid.attach(self.videos_boxes[i], 0, 0, 1, columns)
             else:
-                self.main_grid.attach_next_to(self.videos_boxes[i], self.videos_boxes[i - 1], Gtk.PositionType.BOTTOM, 1, columns)
-        self.main_grid.attach_next_to(self.buttons_box, self.videos_boxes[len(self.videos_boxes) - 1], Gtk.PositionType.BOTTOM, 1, 1)
+                self.main_grid.attach_next_to(self.videos_boxes[i], self.videos_boxes[i - 1], Gtk.PositionType.BOTTOM,
+                                              1, columns)
+        self.main_grid.attach_next_to(self.buttons_box, self.videos_boxes[len(self.videos_boxes) - 1],
+                                      Gtk.PositionType.BOTTOM, 1, 1)
 
         for i, gtksink in enumerate(videos.gtksinks):
-            self.videos_boxes[i//3].pack_start(gtksink.props.widget, True, True, 0)
+            self.videos_boxes[i // 3].pack_start(gtksink.props.widget, True, True, 0)
         videos.show_widget()
 
         self.buttons_box.pack_start(self.play_button, True, True, 0)
@@ -191,9 +194,9 @@ class GUI:
 
 
 links = ["http://192.168.0.102:8080/video", "http://192.168.0.104:8080/video"]
-# links = ["https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
-#          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
-#          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"]
+# links = ["rtsp://192.168.0.104:8080/h264_pcm.sdp",
+#          "rtsp://192.168.0.102:8080/h264_pcm.sdp"]
+#          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"
 scheduler = Scheduler(links)
 # scheduler.start_videos_buffering()
 scheduler.start_working()
