@@ -21,9 +21,11 @@ class Scheduler:
             self.playing_state = True
             try:
                 frame_to_display = self.videos[index].get_frame()
+                self.check_buffer_difference(index)
                 # if index == 0:
                 #     print(len(self.videos[index].frames_list))
-                frame_to_display = cv2.cvtColor(frame_to_display, cv2.COLOR_BGR2RGB) # OpenCV treat images as having BGR layers, Pillow as RGB
+                frame_to_display = cv2.cvtColor(frame_to_display,
+                                                cv2.COLOR_BGR2RGB)  # OpenCV treat images as having BGR layers, Pillow as RGB
                 img = Image.fromarray(frame_to_display)
                 # img = self.adjust_frame_size(img, img.size)
                 img = img.resize((320, 240))
@@ -41,6 +43,13 @@ class Scheduler:
         for i in range(len(self.videos)):
             self.play(i)
 
+    def check_buffer_difference(self, index):
+        min_list = min([v.get_frames_list_size() for v in self.videos])
+        diff = self.videos[index].get_frames_list_size() - min_list
+        if diff > 30:
+            self.videos[index].delete_frames(diff - 1)
+            print("difference", index)
+
     def check_all_buffers(self):
         result = True
         for video in self.videos:
@@ -55,10 +64,10 @@ class Scheduler:
     def adjust_frame_size(self, image, old_size):
         # try:
         ratio = old_size[0] // old_size[1]
-        if self.gui.default_size[0] > self.gui.default_size[1]\
+        if self.gui.default_size[0] > self.gui.default_size[1] \
                 or (self.gui.default_size[0] == self.gui.default_size[1] and old_size[0] < old_size[1]):
             return image.resize((self.gui.default_size[1] * ratio, self.gui.default_size[1]))
-        elif self.gui.default_size[0] < self.gui.default_size[1]\
+        elif self.gui.default_size[0] < self.gui.default_size[1] \
                 or (self.gui.default_size[0] == self.gui.default_size[1] and old_size[0] > old_size[1]):
             return image.resize((self.gui.default_size[0], self.gui.default_size[0] // ratio))
         # except:
@@ -96,6 +105,9 @@ class Video(cv2.VideoCapture):
 
     def get_frame(self):
         return self.frames_list.pop(0)
+
+    def delete_frames(self, amount):
+        del self.frames_list[:amount]
 
     def get_frames_list_size(self):
         return len(self.frames_list)
@@ -175,13 +187,13 @@ class GUI:
 
 # cap = Video("http://192.168.0.100:8080/video", 10)
 cameras = [
-           "http://192.168.0.101:8080/video",
-           # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
-           # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
-           "http://192.168.0.102:8080/video",
-           "http://192.168.0.104:8080/video",
-           0
-           ]
+    # "http://192.168.0.101:8080/video",
+    # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
+    # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
+    "http://192.168.0.102:8080/video",
+    "http://192.168.0.104:8080/video",
+    0
+]
 scheduler = Scheduler(cameras, 100, 50)
 scheduler.play_all()
 scheduler.display_GUI()
