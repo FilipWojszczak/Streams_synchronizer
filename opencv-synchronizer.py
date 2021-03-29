@@ -197,12 +197,12 @@ class GUI:
 
 
 cameras = [
-    # "http://192.168.0.101:8080/video",
+    "http://192.168.0.101:8080/video",
     # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
     # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
     "http://192.168.0.102:8080/video",
-    # "http://192.168.0.104:8080/video",
-    0
+    "http://192.168.0.104:8080/video",
+    # 0
 ]
 scheduler = Scheduler(cameras, 100, 50)
 scheduler.display_GUI()
