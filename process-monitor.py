@@ -2,6 +2,7 @@ import psutil
 import csv
 from datetime import datetime
 import time
+import sys
 
 
 class Monitor:
@@ -11,31 +12,31 @@ class Monitor:
         self.time_period = time_period
         self.samples_amount = samples_amount
         self.csv_processing = CSVProcessing(synchronizer_name, additional_info)
-        self.data = []
+        self.data = [["Sample number", "CPU usage [%]", "Memory usage [B]"]]
         self.process = None
+        self.cpus_threads = psutil.cpu_count()
 
     def monitor(self):
-        counter = 0
-        self.process = [proc for proc in psutil.process_iter()
-                        if proc.name() == self.process_name and proc.pid == self.process_id]
-        self.process = self.process[0]
+        counter = 1
+        for proc in psutil.process_iter():
+            if proc.name() == self.process_name and proc.pid == self.process_id:
+                self.process = proc
+                break
+
         while True:
             try:
-                cpu_usage = self.process.cpu_percent()
+                cpu_usage = self.process.cpu_percent() / self.cpus_threads
                 memory_usage = self.process.memory_full_info().uss
-                self.data.append([cpu_usage, memory_usage])
+                self.data.append([counter, cpu_usage, memory_usage])
                 print(cpu_usage, memory_usage)
+                # , self.process.num_threads()
                 time.sleep(self.time_period)
                 counter += 1
                 if self.samples_amount == counter:
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
-                print("end")
                 self.csv_processing.save(self.data)
-
-    # def __exit__(self):
-    #     print("end")
-    #     self.csv_processing.save(self.data)
+                sys.exit(0)
 
 
 class CSVProcessing:
@@ -50,9 +51,9 @@ class CSVProcessing:
         print("Saved")
 
 
-pid = 12716
+pid = 4264
 process_num = "python.exe"
-time_per = 5  # in seconds
+time_per = 1  # in seconds
 samples_amo = -1
 synchronizer_nam = "GStreamer"  # "OpenCV"
 ad_info = ""
