@@ -70,10 +70,10 @@ class Videos:
             self.sources[index].connect("pad-added", self.on_source_pad_added)
             self.sources[index].set_property('uri', uri)
             # self.queues[index].set_property('max-size-buffers', 0)
-            # self.queues[index].set_property('max-size-bytes', 0)
+            self.queues[index].set_property('max-size-bytes', 0)
             # self.queues[index].set_property('max-size-time', 0)
             # self.queues[index].set_property('min-threshold-buffers', 0)
-            # self.queues[index].set_property('min-threshold-bytes', 20048576)
+            self.queues[index].set_property('min-threshold-bytes', 200485760)
             # self.queues[index].set_property('min-threshold-time', 10000000000)
 
             self.vconverts[index].link(self.queues[index])
@@ -193,7 +193,7 @@ class GUI:
         videos.stop()
 
 
-links = ["http://192.168.0.101:8080/video", "http://192.168.0.102:8080/video", "http://192.168.0.104:8080/video"]
+links = ["http://213.184.127.123:82/mjpg/video.mjpg", "http://192.168.0.102:8080/video"]
 # links = ["rtsp://192.168.0.104:8080/h264_pcm.sdp",
 #          "rtsp://192.168.0.102:8080/h264_pcm.sdp"]
 #          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"
