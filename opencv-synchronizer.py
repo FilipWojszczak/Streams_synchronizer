@@ -15,6 +15,7 @@ class Scheduler:
         self.gui_state = "STOP"
         self.use_buffer = False
         self.videos = [Video(source, max_bfr_size, min_start_bfr_size) for source in source_list]
+        self.is_displaying = [False for source in source_list]
         self.min_start_bfr_size = min_start_bfr_size
         self.capture_errors = [0 for source in source_list]
         self.check_state()
@@ -28,31 +29,50 @@ class Scheduler:
         for video in self.videos:
             video.state = self.gui.state
         self.gui_state = self.gui.state
+        if self.gui_state == "STOP":
+            self.use_buffer = False
         self.gui.window.after(1, self.check_state)
 
     def handle_video(self, index):
         while True:
             self.videos[index].capture()
-            if self.gui_state == "PLAY"\
-                    and (self.videos[index].get_frames_list_size() >= self.min_start_bfr_size or self.use_buffer):
-                try:
-                    processed_frame = self.videos[index].get_processed_frame()
-                    self.gui.add_frame(index, processed_frame)
-                    self.capture_errors[index] = 0
-                except IndexError:
-                    print("indexerror")
+            if self.gui_state == "PLAY":
+                if self.videos[index].get_frames_list_size() >= self.min_start_bfr_size or self.use_buffer:
+                    try:
+                        processed_frame = self.videos[index].get_processed_frame()
+                        self.gui.add_frame(index, processed_frame)
+                        self.check_buffer_difference(index)
+                        self.is_displaying[index] = True
+                        self.capture_errors[index] = 0
+                    except IndexError:
+                        self.capture_errors[index] += 1
+                        if self.capture_errors[index] >= 50:
+                            print("use buffer")
+                            self.use_buffer = True
+                else:
+                    self.is_displaying[index] = False
                     self.capture_errors[index] += 1
-                    if self.capture_errors[index] >= 50:
-                        print("ready=false", index)
-                        self.use_buffer = False
+                    if self.capture_errors[index] >= self.min_start_bfr_size * 2:
+                        print("use buffer")
+                        self.use_buffer = True
             # if index == 0:
             # print(self.videos[0].get_frames_list_size(), self.videos[1].get_frames_list_size())
 
-    # def check_buffer_difference(self, index):
-    #     min_list = min([v.get_frames_list_size() for v in self.videos])
-    #     diff = self.videos[index].get_frames_list_size() - min_list
-    #     if diff > self.min_start_bfr_size / 2:
-    #         self.videos[index].delete_frames(diff - 1)
+    def check_buffer_difference(self, index):
+        if self.min_start_bfr_size > 30 and self.check_is_displaying():
+            min_list = min([v.get_frames_list_size() for v in self.videos])
+            diff = self.videos[index].get_frames_list_size() - min_list
+            if diff > 30:
+                print("diff", index)
+                self.videos[index].delete_frames(diff - 1)
+
+    def check_is_displaying(self):
+        result = True
+        for element in self.is_displaying:
+            if not element:
+                result = False
+                break
+        return result
 
     # def check_all_buffers(self):
     #     result = True
@@ -201,16 +221,21 @@ class GUI:
         self.state = "STOP"
 
     def add_frame(self, index, img_tk):
-        self.videos_area[index].imgtk = img_tk
         self.videos_area[index].configure(image=img_tk)
+        self.videos_area[index].imgtk = img_tk
 
 
 cameras = [
-    # "http://192.168.0.101:8080/video",
+    "http://192.168.0.101:8080/video",
     # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
     # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
     "http://213.184.127.123:82/mjpg/video.mjpg",
-    "http://192.168.0.102:8080/video",
+    "http://178.8.150.125:80/mjpg/video.mjpg",
+    "http://90.146.10.190:80/mjpg/video.mjpg",
+    "http://92.220.173.101:80/mjpg/video.mjpg",
+    "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
+    "http://84.253.45.146:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER"
+    # "http://192.168.0.102:8080/video",
     # "http://192.168.0.104:8080/video",
     # 0
 ]
