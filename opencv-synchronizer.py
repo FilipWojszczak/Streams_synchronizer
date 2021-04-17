@@ -109,9 +109,6 @@ class Video(cv2.VideoCapture):
         self.frames_list = []
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.last_frame_timestamp = datetime.now()
-        # self.thread = threading.Thread(target=self.capture, args=(max_bfr_frms,))
-        # self.thread.daemon = True
-        # self.thread.start()
 
     def __del__(self):
         self.cap.release()
@@ -171,15 +168,15 @@ class GUI:
         self.videos_frames = []
         self.videos_area = []
         for cam_nr in range(cameras_number):
-            if cam_nr % 3 == 0:
+            if cam_nr % 5 == 0:
                 self.videos_frames.append(tk.Frame(self.window))
                 self.videos_frames[-1].pack(expand=tk.YES, fill=tk.BOTH)
             self.videos_area.append(tk.Label(self.videos_frames[-1]))
             self.videos_area[-1].pack(expand=tk.YES, side=tk.LEFT, fill=tk.BOTH)
 
         self.blank_videos_places = 0
-        if cameras_number > 3 and cameras_number % 3 != 0:
-            self.blank_videos_places = 3 - (cameras_number % 3)
+        if cameras_number > 5 and cameras_number % 5 != 0:
+            self.blank_videos_places = 5 - (cameras_number % 5)
             for i in range(self.blank_videos_places):
                 self.videos_area.append(tk.Label(self.videos_frames[-1]))
                 self.videos_area[-1].pack(expand=tk.YES, side=tk.LEFT, fill=tk.BOTH)
@@ -210,9 +207,6 @@ class GUI:
 
     def on_play(self):
         self.state = "PLAY"
-        # print(self.videos_area[0].winfo_width(), self.videos_area[0].winfo_height())
-        # print(self.videos_area[3].winfo_width(), self.videos_area[3].winfo_height())
-        # print(self.buttons_frame.winfo_width(), self.buttons_frame.winfo_height())
 
     def on_pause(self):
         self.state = "PAUSE"
@@ -226,15 +220,25 @@ class GUI:
 
 
 cameras = [
-    "http://192.168.0.101:8080/video",
-    # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
-    # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
     "http://213.184.127.123:82/mjpg/video.mjpg",
     "http://178.8.150.125:80/mjpg/video.mjpg",
     "http://90.146.10.190:80/mjpg/video.mjpg",
     "http://92.220.173.101:80/mjpg/video.mjpg",
     "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
-    "http://84.253.45.146:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER"
+    "http://94.158.99.9:80/mjpg/video.mjpg",
+    "http://46.35.192.141:80/mjpg/video.mjpg",
+    "http://81.8.160.235:80/mjpg/video.mjpg",
+    "http://194.68.122.244:83/mjpg/video.mjpg",
+    "http://94.72.19.58:80/mjpg/video.mjpg",
+    "http://217.92.73.116:80/mjpg/video.mjpg",
+    "http://194.66.34.9:80/mjpg/video.mjpg",
+    "http://213.219.157.15:80/mjpg/video.mjpg",
+    "http://89.231.23.159:8081/image?speed=0",
+    "http://109.206.96.247:8080/cam_1.cgi"
+
+    # "http://192.168.0.101:8080/video",
+    # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
+    # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
     # "http://192.168.0.102:8080/video",
     # "http://192.168.0.104:8080/video",
     # 0

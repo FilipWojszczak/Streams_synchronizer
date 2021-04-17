@@ -38,7 +38,6 @@ class Scheduler:
 
 class Videos:
     def __init__(self, uri_list):
-        # Link: "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"
         self.uri_list = uri_list
         self.pipeline = Gst.Pipeline().new()
         self.pipeline.set_property("async-handling", True)
@@ -82,7 +81,6 @@ class Videos:
             queue_pad.link(multiqueue_pad)
 
     def play(self):
-        # self.pipeline.set_state(Gst.State.PLAYING)
         for queue in self.queues:
             queue.set_state(Gst.State.PLAYING)
         self.multiqueue.set_state(Gst.State.PLAYING)
@@ -136,13 +134,7 @@ class GUI:
         self.main_grid.set_row_spacing(5)
 
         self.videos_boxes = []
-        videos_boxes_amount = 0
-        if len(videos.gtksinks) <= 3:
-            videos_boxes_amount = 1
-        elif len(videos.gtksinks) <= 6:
-            videos_boxes_amount = 2
-        elif len(videos.gtksinks) <= 9:
-            videos_boxes_amount = 3
+        videos_boxes_amount = len(videos.gtksinks) // 5 + 1 if len(videos.gtksinks) % 5 else len(videos.gtksinks) // 5
         for i in range(videos_boxes_amount):
             self.videos_boxes.append(Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5))
             self.videos_boxes[i].props.expand = True
@@ -175,7 +167,7 @@ class GUI:
                                       Gtk.PositionType.BOTTOM, 1, 1)
 
         for i, gtksink in enumerate(videos.gtksinks):
-            self.videos_boxes[i // 3].pack_start(gtksink.props.widget, True, True, 0)
+            self.videos_boxes[i // 5].pack_start(gtksink.props.widget, True, True, 0)
         videos.show_widget()
 
         self.buttons_box.pack_start(self.play_button, True, True, 0)
@@ -193,7 +185,22 @@ class GUI:
         videos.stop()
 
 
-links = ["http://213.184.127.123:82/mjpg/video.mjpg", "http://192.168.0.102:8080/video"]
+links = ["http://213.184.127.123:82/mjpg/video.mjpg",
+         "http://178.8.150.125:80/mjpg/video.mjpg",
+         "http://90.146.10.190:80/mjpg/video.mjpg",
+         "http://92.220.173.101:80/mjpg/video.mjpg",
+         "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
+         "http://94.158.99.9:80/mjpg/video.mjpg",
+         "http://46.35.192.141:80/mjpg/video.mjpg",
+         "http://81.8.160.235:80/mjpg/video.mjpg",
+         "http://194.68.122.244:83/mjpg/video.mjpg",
+         "http://94.72.19.58:80/mjpg/video.mjpg",
+         "http://217.92.73.116:80/mjpg/video.mjpg",
+         "http://194.66.34.9:80/mjpg/video.mjpg",
+         "http://213.219.157.15:80/mjpg/video.mjpg",
+         "http://89.231.23.159:8081/image?speed=0",
+         "http://109.206.96.247:8080/cam_1.cgi"
+]
 # links = ["rtsp://192.168.0.104:8080/h264_pcm.sdp",
 #          "rtsp://192.168.0.102:8080/h264_pcm.sdp"]
 #          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"
