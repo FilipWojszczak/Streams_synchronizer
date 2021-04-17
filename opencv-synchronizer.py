@@ -1,5 +1,6 @@
 import cv2
 import sys
+import os
 import queue
 import time
 import threading
@@ -36,8 +37,11 @@ class Scheduler:
     def handle_video(self, index):
         while True:
             self.videos[index].capture()
+            if index == len(self.videos) - 1:
+                len_frames_list = [self.videos[a].get_frames_list_size() for a in range(len(self.videos))]
+                print(len_frames_list)
             if self.gui_state == "PLAY":
-                if self.videos[index].get_frames_list_size() >= self.min_start_bfr_size or self.use_buffer:
+                if self.check_all_buffers():
                     try:
                         processed_frame = self.videos[index].get_processed_frame()
                         self.gui.add_frame(index, processed_frame)
@@ -45,16 +49,17 @@ class Scheduler:
                         self.is_displaying[index] = True
                         self.capture_errors[index] = 0
                     except IndexError:
-                        self.capture_errors[index] += 1
-                        if self.capture_errors[index] >= 50:
-                            print("use buffer")
-                            self.use_buffer = True
+                        pass
+                        # self.capture_errors[index] += 1
+                        # if self.capture_errors[index] >= self.min_start_bfr_size:
+                        #     print("use buffer")
+                        #     self.use_buffer = True
                 else:
                     self.is_displaying[index] = False
-                    self.capture_errors[index] += 1
-                    if self.capture_errors[index] >= self.min_start_bfr_size * 2:
-                        print("use buffer")
-                        self.use_buffer = True
+                    # self.capture_errors[index] += 1
+                    # if self.capture_errors[index] >= self.min_start_bfr_size * 2:
+                    #     print("use buffer")
+                    #     self.use_buffer = True
             # if index == 0:
             # print(self.videos[0].get_frames_list_size(), self.videos[1].get_frames_list_size())
 
@@ -74,13 +79,13 @@ class Scheduler:
                 break
         return result
 
-    # def check_all_buffers(self):
-    #     result = True
-    #     for video in self.videos:
-    #         if video.get_frames_list_size() <= self.min_start_bfr_size:
-    #             result = False
-    #             break
-    #     return result
+    def check_all_buffers(self):
+        result = True
+        for video in self.videos:
+            if not video.buffer_ready:
+                result = False
+                break
+        return result
 
     def display_GUI(self):
         self.gui.window.mainloop()
@@ -98,13 +103,15 @@ class Scheduler:
     #     #     return image.resize((320, 240))
 
 
-class Video(cv2.VideoCapture):
+class Video:
     def __init__(self, name, max_bfr_frms, min_bfr_frms, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
         self.min_bfr_frms = min_bfr_frms
         self.max_bfr_frms = max_bfr_frms
+        self.buffer_ready = False
         self.cap = cv2.VideoCapture(self.name)
+        self.frame_size = self.measure_frame_size()
         self.state = "STOP"
         self.frames_list = []
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
@@ -113,10 +120,17 @@ class Video(cv2.VideoCapture):
     def __del__(self):
         self.cap.release()
 
+    def measure_frame_size(self):
+        ret = False
+        while not ret:
+            ret, frame = self.cap.read()
+            frame_size = sys.getsizeof(frame)
+            return frame_size
+
     def capture(self):
-        # if self.name == "http://213.184.127.123:82/mjpg/video.mjpg":
-        #     print(self.name, self.fps)
         ret, frame = self.cap.read()
+        # if self.name == "http://178.8.150.125:80/mjpg/video.mjpg":
+        #     print(self.name, self.fps)
         if not ret:
             pass
             # break
@@ -132,6 +146,11 @@ class Video(cv2.VideoCapture):
                 self.frames_list.append(frame)
             else:
                 self.frames_list.clear()
+                self.buffer_ready = False
+
+            if not self.buffer_ready:
+                if self.get_frames_list_size() >= self.min_bfr_frms:
+                    self.buffer_ready = True
 
     def get_frame(self):
         return self.frames_list.pop(0)
@@ -225,18 +244,18 @@ cameras = [
     "http://90.146.10.190:80/mjpg/video.mjpg",
     "http://92.220.173.101:80/mjpg/video.mjpg",
     "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
-    "http://94.158.99.9:80/mjpg/video.mjpg",
+    "http://174.6.126.86:80/mjpg/video.mjpg",
     "http://46.35.192.141:80/mjpg/video.mjpg",
     "http://81.8.160.235:80/mjpg/video.mjpg",
     "http://194.68.122.244:83/mjpg/video.mjpg",
     "http://94.72.19.58:80/mjpg/video.mjpg",
     "http://217.92.73.116:80/mjpg/video.mjpg",
     "http://194.66.34.9:80/mjpg/video.mjpg",
-    "http://213.219.157.15:80/mjpg/video.mjpg",
+    "http://107.0.231.40:8082/mjpg/video.mjpg",
     "http://89.231.23.159:8081/image?speed=0",
     "http://109.206.96.247:8080/cam_1.cgi"
 
-    # "http://192.168.0.101:8080/video",
+    # "http://192.168.0.105:8080/video",
     # "rtsp://192.168.0.104:8080/h264_pcm.sdp",
     # "rtsp://192.168.0.102:8080/h264_pcm.sdp",
     # "http://192.168.0.102:8080/video",
