@@ -38,7 +38,7 @@ class Scheduler:
         while True:
             self.videos[index].capture()
             if index == len(self.videos) - 1:
-                len_frames_list = [self.videos[a].get_frames_list_size() for a in range(len(self.videos))]
+                len_frames_list = [self.videos[a].get_frames_list_len() for a in range(len(self.videos))]
                 print(len_frames_list)
             if self.gui_state == "PLAY":
                 if self.check_all_buffers():
@@ -64,9 +64,10 @@ class Scheduler:
             # print(self.videos[0].get_frames_list_size(), self.videos[1].get_frames_list_size())
 
     def check_buffer_difference(self, index):
-        if self.min_start_bfr_size > 30 and self.check_is_displaying():
-            min_list = min([v.get_frames_list_size() for v in self.videos])
-            diff = self.videos[index].get_frames_list_size() - min_list
+        average_second_in_bytes = 45000000
+        if self.min_start_bfr_size > average_second_in_bytes and self.check_is_displaying():
+            min_list = min([v.get_frames_list_len() for v in self.videos])
+            diff = self.videos[index].get_frames_list_len() - min_list
             if diff > 30:
                 print("diff", index)
                 self.videos[index].delete_frames(diff - 1)
@@ -130,6 +131,7 @@ class Video:
     def capture(self):
         ret, frame = self.cap.read()
         # if self.name == "http://178.8.150.125:80/mjpg/video.mjpg":
+        #     print(self.get_frames_list_size())
         #     print(self.name, self.fps)
         if not ret:
             pass
@@ -137,7 +139,7 @@ class Video:
             # self.cap.release()
             self.cap = cv2.VideoCapture(self.name)
         else:
-            if (len(self.frames_list) > self.max_bfr_frms and self.state == "PLAY") or self.state == "STOP":
+            if (self.get_frames_list_size() > self.max_bfr_frms and self.state == "PLAY") or self.state == "STOP":
                 try:
                     self.frames_list.pop(0)
                 except IndexError:
@@ -158,8 +160,14 @@ class Video:
     def delete_frames(self, amount):
         del self.frames_list[:amount]
 
-    def get_frames_list_size(self):
+    def get_frames_list_len(self):
         return len(self.frames_list)
+
+    def get_frames_list_size(self):
+        size = 0
+        for element in self.frames_list:
+            size += sys.getsizeof(element)
+        return size
 
     def get_processed_frame(self):
         frame_to_display = self.get_frame()
@@ -262,5 +270,5 @@ cameras = [
     # "http://192.168.0.104:8080/video",
     # 0
 ]
-scheduler = Scheduler(cameras, 1000, 50)
+scheduler = Scheduler(cameras, 1000000000, 50000000)
 scheduler.display_GUI()
