@@ -45,6 +45,8 @@ class Scheduler:
                     try:
                         processed_frame = self.videos[index].get_processed_frame()
                         self.gui.add_frame(index, processed_frame)
+                        self.videos[index].add_second_timestamp_to_frame(datetime.now())
+                        self.videos[index].increment_finished_frames_timestamps_counter()
                         self.check_buffer_difference(index)
                         self.is_displaying[index] = True
                         self.capture_errors[index] = 0
@@ -91,17 +93,8 @@ class Scheduler:
     def display_GUI(self):
         self.gui.window.mainloop()
 
-    # def adjust_frame_size(self, image, old_size):
-    #     # try:
-    #     ratio = old_size[0] // old_size[1]
-    #     if self.gui.default_size[0] > self.gui.default_size[1] \
-    #             or (self.gui.default_size[0] == self.gui.default_size[1] and old_size[0] < old_size[1]):
-    #         return image.resize((self.gui.default_size[1] * ratio, self.gui.default_size[1]))
-    #     elif self.gui.default_size[0] < self.gui.default_size[1] \
-    #             or (self.gui.default_size[0] == self.gui.default_size[1] and old_size[0] > old_size[1]):
-    #         return image.resize((self.gui.default_size[0], self.gui.default_size[0] // ratio))
-    #     # except:
-    #     #     return image.resize((320, 240))
+    def save_csv_with_delay_values(self):
+        pass
 
 
 class Video:
@@ -112,9 +105,12 @@ class Video:
         self.max_bfr_frms = max_bfr_frms
         self.buffer_ready = False
         self.cap = cv2.VideoCapture(self.name)
+        print(self.name)
         self.frame_size = self.measure_frame_size()
         self.state = "STOP"
         self.frames_list = []
+        self.finished_frames_timestamps_counter = 0
+        self.frames_timestamps = []
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.last_frame_timestamp = datetime.now()
 
@@ -139,15 +135,21 @@ class Video:
             # self.cap.release()
             self.cap = cv2.VideoCapture(self.name)
         else:
+            self.frames_timestamps.append([datetime.now()])
             if (self.get_frames_list_size() > self.max_bfr_frms and self.state == "PLAY") or self.state == "STOP":
                 try:
                     self.frames_list.pop(0)
+                    self.add_second_timestamp_to_frame()
+                    self.increment_finished_frames_timestamps_counter()
                 except IndexError:
                     pass
             if self.state != "STOP":
                 self.frames_list.append(frame)
             else:
                 self.frames_list.clear()
+                for frame_number in range(self.finished_frames_timestamps_counter, len(self.frames_timestamps)):
+                    self.add_second_timestamp_to_frame()
+                    self.increment_finished_frames_timestamps_counter()
                 self.buffer_ready = False
 
             if not self.buffer_ready:
@@ -177,9 +179,14 @@ class Video:
     def process_image(self, image):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # OpenCV treat images as having BGR layers, Pillow as RGB
         image = Image.fromarray(image)
-        # image = self.adjust_frame_size(image, image.size)
         image = image.resize((320, 240))
         return ImageTk.PhotoImage(image=image)
+
+    def add_second_timestamp_to_frame(self, timestamp=None):
+        self.frames_timestamps[self.finished_frames_timestamps_counter].append(timestamp)
+
+    def increment_finished_frames_timestamps_counter(self, amount=1):
+        self.finished_frames_timestamps_counter += amount
 
     def update_last_frame_timestamp(self, new_timestamp):
         self.last_frame_timestamp = new_timestamp
@@ -222,16 +229,6 @@ class GUI:
         self.pause_button.pack(expand=tk.YES, side=tk.LEFT)
         self.stop_button.pack(expand=tk.YES, side=tk.LEFT)
 
-        self.window.bind('<Configure>', self.on_resize)
-
-    def on_resize(self, event):
-        self.default_size = (self.videos_area[0].winfo_width(), self.videos_area[0].winfo_height())
-
-        # image = Image.new("RGB", (self.default_size[0] - 2, self.default_size[1] - 2), (0, 0, 0))
-        # image = ImageTk.PhotoImage(image=image)
-        # for i, area in enumerate(self.videos_area):
-        #     self.add_frame(i, image)
-
     def on_play(self):
         self.state = "PLAY"
 
@@ -248,8 +245,8 @@ class GUI:
 
 cameras = [
     "http://213.184.127.123:82/mjpg/video.mjpg",
-    "http://178.8.150.125:80/mjpg/video.mjpg",
-    "http://90.146.10.190:80/mjpg/video.mjpg",
+    "http://217.117.247.146:80/mjpg/video.mjpg",
+    "http://83.160.112.104:82/mjpg/video.mjpg",
     "http://92.220.173.101:80/mjpg/video.mjpg",
     "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
     "http://174.6.126.86:80/mjpg/video.mjpg",
@@ -270,5 +267,5 @@ cameras = [
     # "http://192.168.0.104:8080/video",
     # 0
 ]
-scheduler = Scheduler(cameras, 1000000000, 50000000)
+scheduler = Scheduler(cameras, 1000000000, 1)
 scheduler.display_GUI()
