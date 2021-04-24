@@ -42,7 +42,7 @@ class Monitor:
 class CSVProcessing:
     def __init__(self, synchronizer_name, additional_info):
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.directory = 'pliki_csv\\' + timestamp + "_" + synchronizer_name + "_" + additional_info + ".csv"
+        self.directory = 'pliki_csv\\' + synchronizer_name + "_" + timestamp + "_" + additional_info + ".csv"
 
     def save(self, data):
         with open(self.directory, 'w', newline='') as csv_file:
@@ -52,10 +52,12 @@ class CSVProcessing:
 
 
 pid = 4264
-process_num = "python.exe"
-time_per = 1  # in seconds
-samples_amo = -1
-synchronizer_nam = "GStreamer"  # "OpenCV"
-ad_info = ""
-monitor = Monitor(pid, process_num, time_per, samples_amo, synchronizer_nam, ad_info)
+main_process_name = "python.exe"
+main_time_period = 1  # in seconds
+main_samples_amount = -1
+main_synchronizer_name = "GStreamer"  # "OpenCV"
+main_streams_amount = 15
+main_buffer_bytes = 1
+main_additional_info = "streams_" + str(main_streams_amount) + "_buffer_bytes_" + str(main_buffer_bytes)
+monitor = Monitor(pid, main_process_name, main_time_period, main_samples_amount, main_synchronizer_name, main_additional_info)
 monitor.monitor()

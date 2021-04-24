@@ -1,3 +1,5 @@
+import csv
+
 import cv2
 import sys
 import os
@@ -7,13 +9,18 @@ import threading
 from datetime import datetime
 from datetime import timedelta
 import tkinter as tk
+
+import numpy as np
 from PIL import Image, ImageTk
 
 
 class Scheduler:
     def __init__(self, source_list, max_bfr_size, min_start_bfr_size):
         self.gui = GUI(len(source_list))
+        self.gui.window.protocol("WM_DELETE_WINDOW", self.before_mainloop_terminate)
         self.gui_state = "STOP"
+
+        self.app_work = True
         self.use_buffer = False
         self.videos = [Video(source, max_bfr_size, min_start_bfr_size) for source in source_list]
         self.is_displaying = [False for source in source_list]
@@ -35,7 +42,7 @@ class Scheduler:
         self.gui.window.after(1, self.check_state)
 
     def handle_video(self, index):
-        while True:
+        while self.app_work:
             self.videos[index].capture()
             if index == len(self.videos) - 1:
                 len_frames_list = [self.videos[a].get_frames_list_len() for a in range(len(self.videos))]
@@ -56,6 +63,8 @@ class Scheduler:
                         # if self.capture_errors[index] >= self.min_start_bfr_size:
                         #     print("use buffer")
                         #     self.use_buffer = True
+                    except:
+                        pass
                 else:
                     self.is_displaying[index] = False
                     # self.capture_errors[index] += 1
@@ -94,7 +103,31 @@ class Scheduler:
         self.gui.window.mainloop()
 
     def save_csv_with_delay_values(self):
-        pass
+        additional_info = "streams_" + str(len(self.videos)) + "_buffer_bytes_" + str(self.min_start_bfr_size)
+        creation_csv_timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+        directory = 'pliki_csv\\delay_data_OpenCV_' + creation_csv_timestamp + "_" + additional_info + ".csv"
+        with open(directory, 'w', newline='') as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=';')
+
+            row = ["Stream " + str(i + 1) for i in range(len(self.videos))]
+            csv_writer.writerow(row)
+
+            rows_amount = max([len(video.frames_timestamps) for video in self.videos])
+            for row_number in range(rows_amount):
+                print(row_number)
+                row = []
+                for video in self.videos:
+                    try:
+                        row.append(video.frames_timestamps[row_number][1] - video.frames_timestamps[row_number][0])
+                    except (IndexError, TypeError):
+                        row.append(np.datetime64('NaT'))
+                csv_writer.writerow(row)
+        print("Saved")
+
+    def before_mainloop_terminate(self):
+        self.app_work = False
+        time.sleep(1)
+        self.gui.window.destroy()
 
 
 class Video:
@@ -249,7 +282,7 @@ cameras = [
     "http://83.160.112.104:82/mjpg/video.mjpg",
     "http://92.220.173.101:80/mjpg/video.mjpg",
     "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
-    "http://174.6.126.86:80/mjpg/video.mjpg",
+    "http://217.7.205.3:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
     "http://46.35.192.141:80/mjpg/video.mjpg",
     "http://81.8.160.235:80/mjpg/video.mjpg",
     "http://194.68.122.244:83/mjpg/video.mjpg",
@@ -269,3 +302,4 @@ cameras = [
 ]
 scheduler = Scheduler(cameras, 1000000000, 1)
 scheduler.display_GUI()
+scheduler.save_csv_with_delay_values()
