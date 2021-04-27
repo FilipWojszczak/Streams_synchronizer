@@ -17,7 +17,7 @@ class Monitor:
         self.cpus_threads = psutil.cpu_count()
 
     def monitor(self):
-        counter = 1
+        counter = 0
         for proc in psutil.process_iter():
             if proc.name() == self.process_name and proc.pid == self.process_id:
                 self.process = proc
@@ -27,11 +27,11 @@ class Monitor:
             try:
                 cpu_usage = self.process.cpu_percent() / self.cpus_threads
                 memory_usage = self.process.memory_full_info().uss
+                counter += 1
                 self.data.append([counter, cpu_usage, memory_usage])
-                print(cpu_usage, memory_usage)
+                print(counter, cpu_usage, memory_usage)
                 # , self.process.num_threads()
                 time.sleep(self.time_period)
-                counter += 1
                 if self.samples_amount == counter:
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
@@ -51,12 +51,12 @@ class CSVProcessing:
         print("Saved")
 
 
-pid = 4264
-main_process_name = "python.exe"
+pid = 63572
+main_process_name = "python3.exe"  # "python.exe"
 main_time_period = 1  # in seconds
-main_samples_amount = -1
+main_samples_amount = 300  # -1
 main_synchronizer_name = "GStreamer"  # "OpenCV"
-main_streams_amount = 15
+main_streams_amount = 2
 main_buffer_bytes = 1
 main_additional_info = "streams_" + str(main_streams_amount) + "_buffer_bytes_" + str(main_buffer_bytes)
 monitor = Monitor(pid, main_process_name, main_time_period, main_samples_amount, main_synchronizer_name, main_additional_info)

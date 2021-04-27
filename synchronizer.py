@@ -14,9 +14,9 @@ Gst.init_check(None)
 
 
 class Scheduler:
-    def __init__(self, uri_list):
+    def __init__(self, uri_list, min_buffer_size):
         self.uri_list = uri_list
-        self.videos = Videos(self.uri_list)
+        self.videos = Videos(self.uri_list, min_buffer_size)
         self.gui = GUI(self.videos)
 
     def start_videos_buffering(self):
@@ -37,7 +37,7 @@ class Scheduler:
 
 
 class Videos:
-    def __init__(self, uri_list):
+    def __init__(self, uri_list, min_buffer_size):
         self.uri_list = uri_list
         self.pipeline = Gst.Pipeline().new()
         self.pipeline.set_property("async-handling", True)
@@ -68,12 +68,10 @@ class Videos:
         for index, uri in enumerate(self.uri_list):
             self.sources[index].connect("pad-added", self.on_source_pad_added)
             self.sources[index].set_property('uri', uri)
-            # self.queues[index].set_property('max-size-buffers', 0)
+            self.queues[index].set_property('max-size-buffers', 0)
             self.queues[index].set_property('max-size-bytes', 0)
-            # self.queues[index].set_property('max-size-time', 0)
-            # self.queues[index].set_property('min-threshold-buffers', 0)
-            self.queues[index].set_property('min-threshold-bytes', 200485760)
-            # self.queues[index].set_property('min-threshold-time', 10000000000)
+            self.queues[index].set_property('max-size-time', 0)
+            self.queues[index].set_property('min-threshold-bytes', min_buffer_size)
 
             self.vconverts[index].link(self.queues[index])
             queue_pad = self.queues[index].get_static_pad("src")
@@ -185,25 +183,26 @@ class GUI:
         videos.stop()
 
 
-links = ["http://213.184.127.123:82/mjpg/video.mjpg",
-         "http://178.8.150.125:80/mjpg/video.mjpg",
-         "http://90.146.10.190:80/mjpg/video.mjpg",
-         "http://92.220.173.101:80/mjpg/video.mjpg",
-         "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
-         "http://94.158.99.9:80/mjpg/video.mjpg",
-         "http://46.35.192.141:80/mjpg/video.mjpg",
-         "http://81.8.160.235:80/mjpg/video.mjpg",
-         "http://194.68.122.244:83/mjpg/video.mjpg",
-         "http://94.72.19.58:80/mjpg/video.mjpg",
-         "http://217.92.73.116:80/mjpg/video.mjpg",
-         "http://194.66.34.9:80/mjpg/video.mjpg",
-         "http://213.219.157.15:80/mjpg/video.mjpg",
-         "http://89.231.23.159:8081/image?speed=0",
-         "http://109.206.96.247:8080/cam_1.cgi"
+links = [
+    "http://213.184.127.123:82/mjpg/video.mjpg",
+    "http://217.117.247.146:80/mjpg/video.mjpg",
+    "http://83.160.112.104:82/mjpg/video.mjpg",
+    "http://92.220.173.101:80/mjpg/video.mjpg",
+    "http://82.77.203.219:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
+    "http://217.7.205.3:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
+    "http://46.35.192.141:80/mjpg/video.mjpg",
+    "http://81.8.160.235:80/mjpg/video.mjpg",
+    "http://194.68.122.244:83/mjpg/video.mjpg",
+    "http://94.72.19.58:80/mjpg/video.mjpg",
+    "http://217.92.73.116:80/mjpg/video.mjpg",
+    "http://194.66.34.9:80/mjpg/video.mjpg",
+    "http://107.0.231.40:8082/mjpg/video.mjpg",
+    "http://89.231.23.159:8081/image?speed=0",
+    "http://109.206.96.247:8080/cam_1.cgi"
 ]
 # links = ["rtsp://192.168.0.104:8080/h264_pcm.sdp",
 #          "rtsp://192.168.0.102:8080/h264_pcm.sdp"]
 #          "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm"
-scheduler = Scheduler(links)
+scheduler = Scheduler(links, 1)
 # scheduler.start_videos_buffering()
 scheduler.start_working()
